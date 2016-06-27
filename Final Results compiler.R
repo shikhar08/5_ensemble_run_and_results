@@ -10,12 +10,11 @@ home=paste(Desktop,"MEMS/S4/R Programming/German/",sep="")
 
 setwd(paste(home,'Model',sep=''))
 
-	preproc_dir=paste(home,'Model',"/","preproc_data",sep='')
-	dir.create("candidates_val")
-	candidates_val=paste(home,'Model',"/","candidates_val",sep='')
-	dir.create("candidates_test")
-	candidates_test=paste(home,'Model',"/","candidates_test",sep='')
-	
+preproc_dir=paste(home,'Model',"/","preproc_data",sep='')
+
+candidates_val=paste(home,'Model',"/","candidates_val",sep='')
+
+candidates_test=paste(home,'Model',"/","candidates_test",sep='')
 	
 dir.create("ensemble_results")
 
@@ -32,43 +31,28 @@ library(verification)
 
 
 
-### AUC
-# auc <- function (obs, pred)
-# {
-  # out <- array()
-  # for(i in 1:ncol(pred)){
-    # out[i] <- (roc.area(as.numeric(obs), as.numeric(pred[,i]))$A)
-    # }
-  # out
-# }
-
-
-
-### Brier
-auc <- function (obs, pred)
+## AUC
+auc = function (obs, pred)
 {
-  out <- array()
+  out = array()
   for(i in 1:ncol(pred)){
-    out[i] <- (brier(as.numeric(obs), as.numeric(pred[,i]))$bs)
+    out[i] = (roc.area(as.numeric(obs), as.numeric(pred[,i]))$A)
     }
   out
 }
 
 
-###KS Score
-# setwd(home)
 
-# source("procLogistic-4.R")
+### Brier
+brier = function (obs, pred)
+{
+  out = array()
+  for(i in 1:ncol(pred)){
+    out[i] = (brier(as.numeric(obs), as.numeric(pred[,i]))$bs)
+    }
+  out
+}
 
-# auc <- function (obs, pred)
-# {
-  # out <- array()
-  # for(i in 1:ncol(pred)){
-    # KS_data = ks(as.numeric(obs), as.numeric(pred[,i]))
-    # out[i] <- as.numeric(max(KS_data$KS))
-    # }
-  # out
-# }
 
 
 setwd(candidates_val)
@@ -78,13 +62,13 @@ ensembleSource_val = "all_val.csv"
 
 ensembleSource=read.csv(ensembleSource_val,as.is=T)
 ensembleGrid=ensembleSource[,-1]
-options <- ncol(ensembleGrid) - 1  # FIX
-workingGrid <- as.matrix(ensembleGrid[,2:(options + 1)])
+options = ncol(ensembleGrid) - 1  # FIX
+workingGrid = as.matrix(ensembleGrid[,2:(options + 1)])
 
 
-score_diagonal <- diag(options)
-scoreVector <- workingGrid %*% score_diagonal
-scores <- auc(ensembleGrid[,1],scoreVector)
+score_diagonal = diag(options)
+scoreVector = workingGrid %*% score_diagonal
+scores = auc(ensembleGrid[,1],scoreVector)
 rm(score_diagonal)
 
 
@@ -100,12 +84,14 @@ ranked=ranked[order(ranked[,2]),]
 
 ranked=cbind(rank=c(1:nrow(ranked)),ranked)
 
-ranked$col<-as.character(ranked$col)
+ranked$col=as.character(ranked$col)
 
-a=c(head(ranked[grep('rf',ranked$col),2],1),head(ranked[grep('svmr',ranked$col),2],1),head(ranked[grep('lr',ranked$col),2],1),head(ranked[grep('ann',ranked$col),2],1),head(ranked[grep('elm',ranked$col),2],1),head(ranked[grep('nb',ranked$col),2],1))
+a=c(head(ranked[grep('rf',ranked$col),2],1),head(ranked[grep('lr',ranked$col),2],1),head(ranked[grep('ann',ranked$col),2],1))
 
-# a=ranked[1:5,'col']
 
+
+
+###For test Sample
 setwd(candidates_test)
 
 
@@ -114,13 +100,13 @@ ensembleSource_test = "all_test.csv"
 
 ensembleSource=read.csv(ensembleSource_test,as.is=T)
 ensembleGrid=ensembleSource[,-1]
-options <- ncol(ensembleGrid) - 1  # FIX
-workingGrid <- as.matrix(ensembleGrid[,2:(options + 1)])
+options = ncol(ensembleGrid) - 1  # FIX
+workingGrid = as.matrix(ensembleGrid[,2:(options + 1)])
 
 
-score_diagonal <- diag(options)
-scoreVector <- workingGrid %*% score_diagonal
-scores <- auc(ensembleGrid[,1],scoreVector)
+score_diagonal = diag(options)
+scoreVector = workingGrid %*% score_diagonal
+scores = auc(ensembleGrid[,1],scoreVector)
 rm(score_diagonal)
 
 
@@ -136,28 +122,14 @@ ranked=ranked[order(ranked[,2]),]
 
 ranked=cbind(rank=c(1:nrow(ranked)),ranked)
 
-ranked$col<-as.character(ranked$col)
+ranked$col=as.character(ranked$col)
 
 
 
 print(paste ("AUC for ",ds[i,"name"]))
 a=gsub('val','test',a)
-# print(ranked[ranked$col %in% a,c(2,3)])
 
 print(ranked[ranked$col==a,c(2,3)])
-
-
-
-
-# finding top 15 candidates
-# for(p in 1:15)
-# {
-# a=which( colnames(ensembleGrid) == ranked[ranked$rank==p,2] )-1
-# if (p==1){top_ranked=a}
-# else{top_ranked=c(top_ranked,a)}
-# }
-
-
 
 
 

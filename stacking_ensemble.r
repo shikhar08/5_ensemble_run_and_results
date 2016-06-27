@@ -11,11 +11,11 @@ home=paste(Desktop,"MEMS/S4/R Programming/German/",sep="")
 setwd(paste(home,'Model',sep=''))
 
 preproc_dir=paste(home,'Model',"/","preproc_data",sep='')
-dir.create("candidates_val")
+
 candidates_val=paste(home,'Model',"/","candidates_val",sep='')
-dir.create("candidates_test")
+
 candidates_test=paste(home,'Model',"/","candidates_test",sep='')
-	
+
 	
 dir.create("ensemble_results")
 
@@ -35,11 +35,12 @@ ensembleSource_val = "cor_removed_val.csv"
 
 library(verification)
 
+###Model performance parameters
 
 ## AUC
-auc <- function (obs, pred)
+auc = function (obs, pred)
 {
-  out <- (roc.area(as.numeric(obs), as.numeric(pred))$A)
+  out = (roc.area(as.numeric(obs), as.numeric(pred))$A)
 
   out
 }
@@ -47,10 +48,10 @@ auc <- function (obs, pred)
 
 
 ### Brier
-auc <- function (obs, pred)
+brier = function (obs, pred)
 {
 
-    out<- (brier(as.numeric(obs), as.numeric(pred))$bs)
+    out= (brier(as.numeric(obs), as.numeric(pred))$bs)
 
   out
 }
@@ -66,15 +67,19 @@ ensembleSource_test = "cor_removed_test.csv"
 
 ensembleTest=read.csv(ensembleSource_test,as.is=T)
 
+
+###Building stacked ensemble model using logistic regression as generalizer.
+
 library(stepPlr)
 
-lr_model <- plr(x = ensembleSource[,-c(1:2)],y = as.numeric(ensembleSource[,2]),lambda=2^-15, cp="aic")
+lr_model = plr(x = ensembleSource[,-c(1:2)],y = as.numeric(ensembleSource[,2]),lambda=2^-15, cp="aic")
+
+##Applying model to predict target values
+lr_train = predict(lr_model,ensembleSource[,-c(1:2)],type="response")
+lr_val = predict(lr_model,ensembleTest[,-c(1:2)],type="response")
 
 
-lr_train <- predict(lr_model,ensembleSource[,-c(1:2)],type="response")
-lr_val <- predict(lr_model,ensembleTest[,-c(1:2)],type="response")
-
-
+##checking model performance
 
 auc(ensembleSource[,2],lr_train)
 
@@ -84,22 +89,11 @@ auc(ensembleTest[,2],lr_val)
 
 
 
-library(randomForest)
-
-rf_model <- randomForest(x = ensembleSource[,-c(1:2)],y =  as.factor(ensembleSource[,2]), ntree=1200,mtry=floor((ncol(ensembleSource)-2)/6),nodesize=5)
+brier(ensembleSource[,2],lr_train)
 
 
-rf_train <- predict(rf_model, ensembleSource[,-c(1:2)], type="prob")[,2]
+brier(ensembleTest[,2],lr_val)
 
-
-colnames(ensembleTest)<-gsub("test","val",colnames(ensembleTest))
-rf_val <- predict(rf_model, ensembleTest[,-c(1:2)], type="prob")[,2]
-
-
-
-auc(ensembleSource[,2],rf_train)
-
-auc(ensembleTest[,2],rf_val)
 
 
 
